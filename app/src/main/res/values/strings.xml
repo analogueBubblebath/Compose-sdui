@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Compose-sdui</string>
+    <string name="error">Ошибка</string>
+    <string name="retry">Повторить</string>
+    <string name="charging">Charging</string>
+    <string name="rssi_dbm">Rssi: %1$d dBm</string>
+    <string name="batteryLevel">%1$d %%</string>
+    <string name="required_field">Обязательное поле</string>
+    <string name="fullname">fullName: %1$s</string>
+    <string name="position">position: %1$s</string>
+    <string name="workhoursinmonth">workHoursInMonth: %1$d</string>
+    <string name="workedouthours">workedOutHours: %1$d</string>
+    <string name="unknown_textfield">Неизвестный тип поля ввода текста</string>
+</resources>
