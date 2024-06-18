@@ -13,12 +13,13 @@ import ml.bubblebath.compose_ssr.R
 
 @Composable
 fun UserCard(
+    modifier: Modifier = Modifier,
     fullName: String,
     position: String,
     workHoursInMonth: Int,
     workedOutHours: Int
 ) {
-    Card(modifier = Modifier.padding(16.dp)) {
+    Card(modifier = modifier) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)

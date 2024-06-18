@@ -21,6 +21,10 @@ class MainScreenViewModel(private val api: SduiApi) : ViewModel(), KoinComponent
     private val _uiState = MutableStateFlow(MainScreenState())
     val uiState: StateFlow<MainScreenState> = _uiState
 
+    init {
+        loadUI()
+    }
+
     private fun loadUI() {
         viewModelScope.launch {
             _uiState.value = uiState.value.copy(isLoading = true)

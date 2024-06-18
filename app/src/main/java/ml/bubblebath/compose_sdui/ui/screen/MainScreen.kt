@@ -7,9 +7,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
@@ -19,13 +22,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import ml.bubblebath.compose_sdui.composable.AutocompleteTextField
 import ml.bubblebath.compose_sdui.composable.UnknownTextField
@@ -43,9 +46,6 @@ fun MainScreen(modifier: Modifier) {
     val viewModel = koinViewModel<MainScreenViewModel>()
     val uiState by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(key1 = Unit) {
-        viewModel.handleIntent(MainScreenIntent.Load)
-    }
 
     if (uiState.isLoading) {
         Box(modifier = modifier) {
@@ -74,93 +74,113 @@ fun MainScreen(modifier: Modifier) {
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         DeviceInfo(uiState.isCharging, uiState.rssi, uiState.batteryLevel)
-
-                        layout.form.text.forEach { jsonText ->
-                            when (TextType.getByJsonType(jsonText.type)) {
-                                TextType.PLAIN -> {
-                                    uiState.textStates[jsonText.attribute]?.let {
-                                        OutlinedTextField(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(start = 16.dp, end = 16.dp),
-                                            value = it.value,
-                                            label = { Text(text = jsonText.caption) },
-                                            isError = it.isError,
-                                            supportingText = {
-                                                if (it.isError) {
-                                                    Text(stringResource(R.string.required_field))
-                                                }
-                                            },
-                                            onValueChange = { newText ->
-                                                viewModel.handleIntent(
-                                                    MainScreenIntent.TextChange(
-                                                        attribute = jsonText.attribute,
-                                                        newText = newText
+                        Column(
+                            modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()
+                        ) {
+                            layout.form.text.forEach { jsonText ->
+                                when (TextType.getByJsonType(jsonText.type)) {
+                                    TextType.PLAIN -> {
+                                        uiState.textStates[jsonText.attribute]?.let {
+                                            OutlinedTextField(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(start = 16.dp, end = 16.dp),
+                                                value = it.value,
+                                                label = { Text(text = jsonText.caption) },
+                                                isError = it.isError,
+                                                supportingText = {
+                                                    if (it.isError) {
+                                                        Text(stringResource(R.string.required_field))
+                                                    }
+                                                },
+                                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                                                onValueChange = { newText ->
+                                                    viewModel.handleIntent(
+                                                        MainScreenIntent.TextChange(
+                                                            attribute = jsonText.attribute,
+                                                            newText = newText
+                                                        )
                                                     )
-                                                )
-                                            })
+                                                })
+                                        }
                                     }
-                                }
 
-                                TextType.AUTOCOMPLETE -> {
-                                    uiState.textStates[jsonText.attribute]?.let {
-                                        AutocompleteTextField(
+                                    TextType.AUTOCOMPLETE -> {
+                                        uiState.textStates[jsonText.attribute]?.let {
+                                            AutocompleteTextField(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(start = 16.dp, end = 16.dp),
+                                                label = { Text(text = jsonText.caption) },
+                                                value = it.value,
+                                                isError = it.isError,
+                                                suggestionValues = jsonText.suggestions
+                                                    ?: emptyList(),
+                                                supportingText = {
+                                                    if (it.isError) {
+                                                        Text(stringResource(id = R.string.required_field))
+                                                    }
+                                                },
+                                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                                                onValueChange = { newText ->
+                                                    viewModel.handleIntent(
+                                                        MainScreenIntent.TextChange(
+                                                            attribute = jsonText.attribute,
+                                                            newText = newText
+                                                        )
+                                                    )
+                                                },
+                                                onSuggestedValueClick = { newText ->
+                                                    viewModel.handleIntent(
+                                                        MainScreenIntent.TextChange(
+                                                            attribute = jsonText.attribute,
+                                                            newText = newText
+                                                        )
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    }
+
+                                    TextType.UNKNOWN -> {
+                                        UnknownTextField(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(start = 16.dp, end = 16.dp),
-                                            label = { Text(text = jsonText.caption) },
-                                            value = it.value,
-                                            isError = it.isError,
-                                            suggestionValues = jsonText.suggestions ?: emptyList(),
-                                            supportingText = {
-                                                if (it.isError) {
-                                                    Text(stringResource(id = R.string.required_field))
-                                                }
-                                            },
-                                            onValueChange = { newText ->
-                                                viewModel.handleIntent(
-                                                    MainScreenIntent.TextChange(
-                                                        attribute = jsonText.attribute,
-                                                        newText = newText
-                                                    )
-                                                )
-                                            },
-                                            onSuggestedValueClick = { newText ->
-                                                viewModel.handleIntent(
-                                                    MainScreenIntent.TextChange(
-                                                        attribute = jsonText.attribute,
-                                                        newText = newText
-                                                    )
-                                                )
-                                            }
+                                                .padding(start = 16.dp, end = 16.dp)
                                         )
                                     }
                                 }
-
-                                TextType.UNKNOWN -> {
-                                    UnknownTextField(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(start = 16.dp, end = 16.dp)
-                                    )
+                            }
+                            layout.form.buttons.forEach {
+                                Button(
+                                    enabled = !uiState.textStates.values.any { it.isError },
+                                    modifier = Modifier.padding(start = 16.dp),
+                                    onClick = {
+                                        viewModel.handleIntent(
+                                            MainScreenIntent.ButtonPressed(
+                                                it.formAction
+                                            )
+                                        )
+                                    }) {
+                                    Text(text = it.caption)
                                 }
                             }
-                        }
-                        layout.form.buttons.forEach {
-                            Button(
-                                enabled = !uiState.textStates.values.any { it.isError },
-                                modifier = Modifier.padding(start = 16.dp),
-                                onClick = { viewModel.handleIntent(MainScreenIntent.ButtonPressed(it.formAction)) }) {
-                                Text(text = it.caption)
-                            }
-                        }
 
-                        uiState.user?.let {
-                            if (it.error.isError) {
-                                ServerError(it.error.description)
-                            } else {
-                                with(it.data.user) {
-                                    UserCard(fullName, position, workHoursInMonth, workedOutHours)
+                            uiState.user?.let {
+                                if (it.error.isError) {
+                                    ServerError(it.error.description)
+                                } else {
+                                    with(it.data.user) {
+                                        UserCard(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                            fullName,
+                                            position,
+                                            workHoursInMonth,
+                                            workedOutHours
+                                        )
+                                    }
                                 }
                             }
                         }
